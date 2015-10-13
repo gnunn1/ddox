@@ -555,31 +555,17 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 /// private
 private void renderCodeLine(R)(ref R dst, string line, DdocContext context)
 {
-	while( line.length > 0 ){
-		switch( line[0] ){
-			default:
-				dst.put(line[0]);
-				line = line[1 .. $];
-				break;
-			case '.':
-				if (line.length > 1 && (line[1].isAlpha() || line[1] == '_'))
-					goto case;
-				else goto default;
-			case 'a': .. case 'z':
-			case 'A': .. case 'Z':
-			case '_':
-				auto ident = skipIdent(line);
-				auto link = context.lookupScopeSymbolLink(ident);
-				if( link.length && link != "#" ){
-					dst.put("<a href=\"");
-					dst.put(link);
-					dst.put("\">");
-					dst.put(ident);
-					dst.put("</a>");
-				} else dst.put(ident);
-				break;
-		}
-	}
+	import ddox.highlight;
+	dst.highlightDCode(line, (string ident, scope void delegate() insert_ident) {
+		auto link = context.lookupScopeSymbolLink(ident);
+		if (link.length && link != "#") {
+			dst.put("<a href=\"");
+			dst.put(link);
+			dst.put("\">");
+			insert_ident();
+			dst.put("</a>");
+		} else insert_ident();
+	});
 }
 
 /// private
