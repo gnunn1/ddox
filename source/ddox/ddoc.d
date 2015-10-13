@@ -58,7 +58,7 @@ shared static this()
 		 `BACKTICK`: "`",
 		 `DDOC_BACKQUOTED`: `$(D_INLINECODE $0)`,
 		 //`D_INLINECODE`: `<pre style="display:inline;" class="d_inline_code">$0</pre>`,
-		 `D_INLINECODE`: `<code class="prettyprint lang-d">$0</code>`,
+		 `D_INLINECODE`: `<code class="lang-d">$0</code>`,
 
 		 `DDOC` : `<html>
   <head>
@@ -430,7 +430,7 @@ private void parseSection(R)(ref R dst, string sect, string[] lines, DdocContext
 						i = j;
 						break;
 					case CODE:
-						dst.put("<pre class=\"code\"><code class=\"prettyprint lang-d\">");
+						dst.put("<pre class=\"code\"><code class=\"lang-d\">");
 						auto j = skipCodeBlock(i);
 						auto base_indent = baseIndent(lines[i+1 .. j]);
 						auto text = renderMacros(lines[i+1 .. j].map!(ln => ln.unindent(base_indent)).join("\n"), context, macros);
@@ -542,7 +542,7 @@ private void renderTextLine(R)(ref R dst, string line, DdocContext context)
 						dst.put(link);
 						dst.put("\">");
 					}
-					if (!inCode) dst.put("<code class=\"prettyprint lang-d\">");
+					if (!inCode) dst.put("<code class=\"lang-d\">");
 					dst.put(ident);
 					if (!inCode) dst.put("</code>");
 					if( link != "#" ) dst.put("</a>");
@@ -942,25 +942,25 @@ unittest {
 
 unittest {
 	auto src = "Testing `inline <code>`.";
-	auto dst = "Testing <code class=\"prettyprint lang-d\">inline &lt;code&gt;</code>.\n";
+	auto dst = "Testing <code class=\"lang-d\">inline &lt;code&gt;</code>.\n";
 	assert(formatDdocComment(src) == dst);
 }
 
 unittest {
 	auto src = "Testing `inline $(CODE)`.";
-	auto dst = "Testing <code class=\"prettyprint lang-d\">inline $(CODE)</code>.\n";
+	auto dst = "Testing <code class=\"lang-d\">inline $(CODE)</code>.\n";
 	assert(formatDdocComment(src));
 }
 
 unittest {
 	auto src = "---\nthis is a `string`.\n---";
-	auto dst = "<section><pre class=\"code\"><code class=\"prettyprint lang-d\">this is a `string`.\n</code></pre>\n</section>\n";
+	auto dst = "<section><pre class=\"code\"><code class=\"lang-d\"><span class=\"kwd\">this is </span><span class=\"pln\">a </span><span class=\"str\">`string`<wbr/></span><span class=\"pun\">.</span>\n</code></pre>\n</section>\n";
 	assert(formatDdocComment(src) == dst);
 }
 
 unittest { // test for properly removed indentation in code blocks
-	auto src = "  ---\n  this is a `string`.\n  ---";
-	auto dst = "<section><pre class=\"code\"><code class=\"prettyprint lang-d\">this is a `string`.\n</code></pre>\n</section>\n";
+	auto src = "  ---\n  testing\n  ---";
+	auto dst = "<section><pre class=\"code\"><code class=\"lang-d\"><span class=\"pln\">testing</span>\n</code></pre>\n</section>\n";
 	assert(formatDdocComment(src) == dst);
 }
 
@@ -968,5 +968,5 @@ unittest { // inssue #99 - parse macros in parameter sections
 	import std.algorithm : find;
 	auto src = "Params:\n\tfoo = $(B bar)";
 	auto dst = "<td> <b>bar</b></td></tr>\n</table>\n</section>\n";
-	assert(formatDdocComment(src).find("<td> ") == dst, formatDdocComment(src).find("<td> "));
+	assert(formatDdocComment(src).find("<td> ") == dst);
 }

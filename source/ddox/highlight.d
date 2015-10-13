@@ -48,6 +48,23 @@ import std.uni : isLower, isUpper;
 void highlightDCode(R)(ref R dst, string code, scope IdentifierRenderCallback ident_render = null)
 	if (isOutputRange!(R, char))
 {
+	string last_class;
+	dst.highlightDCodeImpl(code, ident_render, last_class);
+	if (last_class.length) dst.put("</span>");
+}
+
+/// ditto
+string highlightDCode(string str, IdentifierRenderCallback ident_render = null)
+{
+	auto dst = appender!string();
+	dst.highlightDCode(str, ident_render);
+	return dst.data;
+}
+
+
+void highlightDCodeImpl(R)(ref R dst, string code, scope IdentifierRenderCallback ident_render, ref string last_class)
+	if (isOutputRange!(R, char))
+{
 	version (Have_libdparse) {
 		import std.d.lexer : DLexer, LexerConfig, StringBehavior, StringCache, WhitespaceBehavior,
 			isBasicType, isKeyword, isStringLiteral, isNumberLiteral,
@@ -60,7 +77,6 @@ void highlightDCode(R)(ref R dst, string code, scope IdentifierRenderCallback id
 		config.stringBehavior = StringBehavior.source;
 		config.whitespaceBehavior = WhitespaceBehavior.include;
 
-		string last_class;
 		void writeWithClass(string text, string cls)
 		{
 			import std.format : formattedWrite;
@@ -85,7 +101,7 @@ void highlightDCode(R)(ref R dst, string code, scope IdentifierRenderCallback id
 					symbol ~= t.text;
 					continue;
 				} else if (symbol.data.length) {
-					ident_render(symbol.data, { highlightDCode(dst, symbol.data); });
+					ident_render(symbol.data, { highlightDCodeImpl(dst, symbol.data, null, last_class); });
 					symbol = appender!string();
 				}
 			}
@@ -101,23 +117,18 @@ void highlightDCode(R)(ref R dst, string code, scope IdentifierRenderCallback id
 			else if (t.type == tok!"specialTokenSequence" || t.type == tok!"scriptLine") writeWithClass(t.text, "spc");
 			else if (t.text.strip == "string") writeWithClass(t.text, "typ");
 			else if (t.type == tok!"identifier" && t.text.isCamelCase) writeWithClass(t.text, "typ");
-			else if (t.type == tok!"identifier" || t.type == tok!"whitespace") writeWithClass(t.text, "pln");
+			else if (t.type == tok!"identifier") writeWithClass(t.text, "pln");
+			else if (t.type == tok!"whitespace") writeWithClass(t.text, last_class.length ? last_class : "pln");
 			else writeWithClass(t.text, "pun");
 		}
 
-		if (last_class.length) dst.put("</span>");
+		if (symbol.data.length)
+			ident_render(symbol.data, { highlightDCodeImpl(dst, symbol.data, null, last_class); });
 	} else {
 		dst.put(code.replace("<", "&lt"));
 	}
 }
 
-/// ditto
-string highlightDCode(string str, IdentifierRenderCallback ident_render = null)
-{
-	auto dst = appender!string();
-	dst.highlightDCode(str, ident_render);
-	return dst.data;
-}
 
 alias IdentifierRenderCallback = void delegate(string ident, scope void delegate() insert_ident);
 
