@@ -217,7 +217,6 @@ void formatType(R)(ref R dst, Type type, string delegate(Entity) link_to, bool i
 				formattedWrite(dst, "<a href=\"%s\">%s</a>", link_to(type.typeDecl), highlightDCode(qn).replace(".", ".<wbr/>")); // TODO: avoid allocating replace
 			} else {
 				dst.highlightDCode(type.typeName);
-				//dst.put(type.typeName.replace(".", ".<wbr/>")); // TODO: avoid allocating replace
 			}
 			if( type.templateArgs.length ){
 				dst.put('!');
